@@ -18,6 +18,14 @@ The only thing you need to install is [TileLang](https://github.com/tile-ai/tile
 python -c "import tilelang; print(tilelang.__version__);"
 ```
 
+TileLang also needs `nvcc` and the CUDA toolkit headers to compile kernels. If you don't have a system CUDA toolkit (`nvcc --version`), install them into your venv (keep all three at the same version):
+
+```bash
+pip install "nvidia-cuda-nvcc-cu13==13.3.*" "nvidia-cuda-cccl-cu13==13.3.*" "nvidia-cuda-runtime-cu13==13.3.*"
+export CUDA_HOME=$VIRTUAL_ENV/lib/python3.10/site-packages/nvidia/cu13
+export PATH=$CUDA_HOME/bin:$PATH
+```
+
 You can also run our environment check script to confirm that TileLang and your GPU are configured correctly:
 
 ```bash

@@ -4,8 +4,10 @@ import tilelang
 import tilelang.language as T
 from tilelang.env import env
 
-from common.utils import rand_torch_tensor
+import sys, os
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from common.utils import rand_torch_tensor
 
 tilelang.disable_cache()
 
