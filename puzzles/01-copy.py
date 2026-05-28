@@ -11,7 +11,9 @@ Difficulty: ["easy"]
 import tilelang
 import tilelang.language as T
 import torch
+import sys, os
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.utils import bench_puzzle, test_puzzle
 
 """
@@ -98,13 +100,15 @@ speedup you achieve.
 
 
 @tilelang.jit
-def tl_copy_1d_multi_threads(A):
+def tl_copy_1d_multi_threads(A, n_threads: int):
     # The host/declaration part of TileLang script.
     N = T.const("N")
     A: T.Tensor((N,), T.float16)
     B = T.empty((N,), T.float16)
 
     # TODO: Implement this function
+    with T.Kernel(1, threads=n_threads) as _:
+        T.copy(A, B)
 
     return B
 
@@ -113,7 +117,7 @@ def run_copy_1d_multi_threads():
     print("\n=== Copy 1D Multi-threads ===\n")
     N = 1024 * 256
 
-    test_puzzle(tl_copy_1d_multi_threads, ref_copy_1d, {"N": N})
+    test_puzzle(tl_copy_1d_multi_threads, ref_copy_1d, {"N": N, "n_threads": 128})
 
     # This may take a while since N is large
     bench_puzzle(
@@ -126,7 +130,28 @@ def run_copy_1d_multi_threads():
     bench_puzzle(
         tl_copy_1d_multi_threads,
         ref_copy_1d,
-        {"N": N},
+        {"N": N, "n_threads": 16},
+        bench_name="TL Multi-threads",
+        bench_torch=False,
+    )
+    bench_puzzle(
+        tl_copy_1d_multi_threads,
+        ref_copy_1d,
+        {"N": N, "n_threads": 64},
+        bench_name="TL Multi-threads",
+        bench_torch=False,
+    )
+    bench_puzzle(
+        tl_copy_1d_multi_threads,
+        ref_copy_1d,
+        {"N": N, "n_threads": 256},
+        bench_name="TL Multi-threads",
+        bench_torch=False,
+    )
+    bench_puzzle(
+        tl_copy_1d_multi_threads,
+        ref_copy_1d,
+        {"N": N, "n_threads": 1024},
         bench_name="TL Multi-threads",
         bench_torch=False,
     )
@@ -152,6 +177,16 @@ def tl_copy_1d_parallel(A, BLOCK_N: int):
     B = T.empty((N,), T.float16)
 
     # TODO: Implement this function
+    n_threads = min(1024, BLOCK_N)
+    n_blocks = N // BLOCK_N
+    with T.Kernel(n_blocks, threads=n_threads) as pid_n:
+        # my_A = A[bx * BLOCK_N : (bx + 1) * BLOCK_N]
+        # my_B = B[bx * BLOCK_N : (bx + 1) * BLOCK_N]
+        # T.copy(my_A, my_B)
+        T.copy(
+            A[pid_n * BLOCK_N : (pid_n + 1) * BLOCK_N],
+            B[pid_n * BLOCK_N : (pid_n + 1) * BLOCK_N],
+        )
 
     return B
 
