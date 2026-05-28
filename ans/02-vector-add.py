@@ -10,6 +10,9 @@ Difficulty: ["easy"]
 import tilelang
 import tilelang.language as T
 import torch
+import sys, os
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from common.utils import bench_puzzle, test_puzzle
 

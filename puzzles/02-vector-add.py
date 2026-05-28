@@ -10,7 +10,9 @@ Difficulty: ["easy"]
 import tilelang
 import tilelang.language as T
 import torch
+import sys, os
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.utils import bench_puzzle, test_puzzle
 
 """
@@ -107,6 +109,12 @@ def tl_mul_relu_1d(A, B, BLOCK_N: int):
 
     # TODO: Implement this function
 
+    with T.Kernel(N // BLOCK_N, threads=256) as bx:
+        base_idx = bx * BLOCK_N
+        for i in T.Parallel(BLOCK_N):
+            C[base_idx + i] = A[base_idx + i] * B[base_idx + i]  # how to use SRAM?
+            C[base_idx + i] = T.if_then_else(C[base_idx + i] > 0, C[base_idx + i], 0)
+
     return C
 
 
@@ -169,6 +177,13 @@ def tl_mul_relu_1d_mem(A, B, BLOCK_N: int):
     C = T.empty((N,), dtype)
 
     # TODO: Implement this function
+    with T.Kernel(N // BLOCK_N, threads=256) as bx:
+        base_idx = BLOCK_N * bx
+        for i in T.Parallel(BLOCK_N):
+            temp = T.alloc_fragment((BLOCK_N,), dtype=dtype)
+            temp = A[base_idx + i] * B[base_idx + i]
+            temp = T.if_then_else(temp > 0, temp, 0)
+            C[base_idx + i] = temp
 
     return C
 
