@@ -10,6 +10,9 @@ Difficulty: ["easy"]
 import tilelang
 import tilelang.language as T
 import torch
+import sys, os
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from common.utils import test_puzzle
 
@@ -58,6 +61,29 @@ def tl_outer_add(A, B, BLOCK_N: int, BLOCK_M: int):
     C = T.empty((N, M), dtype)
 
     # TODO: Implement this function
+
+    num_blocks_N = N // BLOCK_N
+    num_blocks_M = M // BLOCK_M
+
+    with T.Kernel(num_blocks_N * num_blocks_M, threads=256) as bx:
+        bx_N = bx // num_blocks_M  # floor division
+        bx_M = bx % num_blocks_M
+        A_local = T.alloc_fragment((BLOCK_N,), dtype=dtype)
+        B_local = T.alloc_fragment((BLOCK_M,), dtype=dtype)
+        C_local = T.alloc_fragment((BLOCK_N, BLOCK_M), dtype=dtype)
+        T.copy(A[bx_N * BLOCK_N : (bx_N + 1) * BLOCK_N], A_local)
+        T.copy(B[bx_M * BLOCK_M : (bx_M + 1) * BLOCK_M], B_local)
+
+        for i in T.Parallel(BLOCK_N):
+            for j in T.Parallel(BLOCK_M):
+                C_local[i, j] = A_local[i] + B_local[j]
+        T.copy(
+            C_local,
+            C[
+                bx_N * BLOCK_N : (bx_N + 1) * BLOCK_N,
+                bx_M * BLOCK_M : (bx_M + 1) * BLOCK_M,
+            ],
+        )
 
     return C
 
