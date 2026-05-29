@@ -202,12 +202,11 @@ def run_mul_relu_1d_mem():
 
     print("Naive TL Implementation: ")
     tl_mul_relu_kernel = tl_mul_relu_1d.compile(N=N, BLOCK_N=BLOCK_N)
-    tl_mul_relu_kernel.print_source_code()
+    tl_mul_relu_kernel.show_source()
 
     print("Optimized Version")
     tl_mul_relu_kernel_opt = tl_mul_relu_1d_mem.compile(N=N, BLOCK_N=BLOCK_N)
-    tl_mul_relu_kernel_opt.print_source_code()
-
+    tl_mul_relu_kernel_opt.show_source()
     test_puzzle(tl_mul_relu_1d_mem, ref_mul_relu_1d, {"N": N, "BLOCK_N": BLOCK_N})
     bench_puzzle(
         tl_mul_relu_1d,

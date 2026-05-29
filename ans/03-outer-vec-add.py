@@ -10,7 +10,9 @@ Difficulty: ["easy"]
 import tilelang
 import tilelang.language as T
 import torch
+import sys, os
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.utils import test_puzzle
 
 """
@@ -80,6 +82,12 @@ def run_outer_add():
     M = 4096
     BLOCK_N = 1024
     BLOCK_M = 1024
+
+    tl_outer_add_kernel = tl_outer_add.compile(
+        N=N, M=M, BLOCK_N=BLOCK_N, BLOCK_M=BLOCK_M
+    )
+    tl_outer_add_kernel.export_sources(kernel_path="./tmp/03-ans-kernel.cu")
+
     test_puzzle(
         tl_outer_add,
         ref_outer_add,

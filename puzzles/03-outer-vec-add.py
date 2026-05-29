@@ -94,6 +94,12 @@ def run_outer_add():
     M = 4096
     BLOCK_N = 1024
     BLOCK_M = 1024
+
+    tl_outer_add_kernel = tl_outer_add.compile(
+        N=N, M=M, BLOCK_N=BLOCK_N, BLOCK_M=BLOCK_M
+    )
+    tl_outer_add_kernel.export_sources(kernel_path="./tmp/03-puzzle-kernel.cu")
+
     test_puzzle(
         tl_outer_add,
         ref_outer_add,
